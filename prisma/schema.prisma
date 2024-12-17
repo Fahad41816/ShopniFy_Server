@@ -1,0 +1,198 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+ 
+
+enum ROLE{
+  user 
+  admin 
+  vendor
+}
+
+model user{
+  id String @id @unique @default(uuid())
+  firstName String 
+  lastName String
+  email String @unique
+  role ROLE
+  image String?
+  password String
+  dateOfBirth DateTime?
+  recentViewPdt String[]
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt 
+
+  shop shop[]
+ 
+
+  Reviews Reviews[]
+
+  cart cart[]
+
+  order Order[]
+
+  followers followers[]
+}
+
+enum ShopStatus{
+  blackList
+  Progress
+  Pending
+}
+
+model shop{
+ id String @id @unique @default(uuid())
+ vendorId String 
+ name String?
+ bio String?
+ image String?
+ bannerImage String?
+ status ShopStatus?
+ about String? 
+ createAt DateTime @default(now())
+ updateAt DateTime @updatedAt
+
+ vendor user @relation(fields: [vendorId], references: [id])
+
+ products products[]
+
+ 
+
+ followers followers[]
+}
+
+model category{
+  id String @id @unique @default(uuid())
+  name String
+  image String
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt  
+
+  products products[]
+}
+
+enum productTypes {
+  special
+  latest
+  newbie
+  normal
+}
+
+enum Availability {
+  IN_STOCK
+  OUT_OF_STOCK
+}
+
+model products{
+  id String @unique @default(uuid())
+  shopId String
+  title String
+  image String
+  stock Int
+  categoryId String
+  description String?
+  price Int
+  Availability Availability @default(IN_STOCK)
+  productType  productTypes @default(normal)
+  tags String[]
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  shops shop @relation(fields: [shopId],references: [id])
+  Category  category @relation(fields: [categoryId], references: [id])
+
+  Reviews Reviews[]
+ 
+
+  OrderItem OrderItem[]
+}
+
+model Reviews{
+  id String @unique @default(uuid())
+  userId String
+  productId String
+  ratting Int
+  review String
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+ 
+  User user @relation(fields: [userId], references: [id])
+
+  Product products @relation(fields: [productId], references: [id])
+}
+
+model cuponCodes{
+  id String @unique @default(uuid())
+  name String
+  code String
+  limit Int
+  expireIn DateTime
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+}
+
+model cart{
+  id String @unique @default(uuid())
+  userId String?
+  userEmail String?
+  productId Json
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  User user? @relation(fields: [userId], references: [id])
+}
+
+enum orderStatus{
+  Pending
+  Complete
+  Cancle
+}
+
+model Order {
+  id              String       @id @default(uuid()) 
+  tranId String @unique
+  billingAddress  Json
+  shippingAddress Json
+  paymentMethod   String
+  userId          String
+  status          orderStatus
+  totalPrice      Int
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user            user         @relation(fields: [userId], references: [id])
+  orderItems      OrderItem[]
+}
+
+model OrderItem {
+  id          String     @id @default(uuid())
+  orderId     String
+  productId   String
+  quantity    Int
+  price       Int
+
+  order       Order      @relation(fields: [orderId], references: [id])
+  product     products    @relation(fields: [productId], references: [id])
+}
+
+model followers{
+  id          String     @id @default(uuid())
+  shopId  String
+  userId String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  User user @relation(fields: [userId], references: [id])
+  Shop shop @relation(fields: [shopId], references: [id])
+}
